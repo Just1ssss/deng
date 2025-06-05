@@ -2,8 +2,6 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, db
 import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.ticker import MultipleLocator
 import os
 import json
 from datetime import datetime
@@ -11,7 +9,7 @@ from datetime import datetime
 # ตั้งค่าหน้าก่อนนำเข้า Firebase
 st.set_page_config(layout="wide", page_title="Friend Map App", page_icon="🏠")
 
-# Custom CSS
+# Custom CSS ที่แก้ไขแล้ว
 st.markdown("""
 <style>
 .stForm {
@@ -37,7 +35,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ฟังก์ชันเริ่มต้น Firebase
+# ฟังก์ชันเริ่มต้น Firebase ที่แก้ไขแล้ว
 def initialize_firebase():
     try:
         # ตรวจสอบก่อนว่า Firebase ยังไม่ถูกเริ่มต้น
@@ -46,25 +44,29 @@ def initialize_firebase():
             if not os.path.exists("firebase_key.json"):
                 st.error("ไฟล์ firebase_key.json ไม่พบ")
                 st.stop()
-            
+
             # ตรวจสอบว่าไฟล์คีย์ถูกต้อง
             try:
                 with open("firebase_key.json") as f:
                     json.load(f)
-            except json.JSONDecodeError:
-                st.error("ไฟล์คีย์ไม่ถูกต้อง")
+            except Exception as e:
+                st.error(f"ไฟล์คีย์ไม่ถูกต้อง: {str(e)}")
                 st.stop()
-            
+
             # เริ่มต้น Firebase
-            cred = credentials.Certificate("firebase_key.json")
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': 'https://home-be9db-default-rtdb.asia-southeast1.firebasedatabase.app/'
-            })
-        
+            try:
+                cred = credentials.Certificate("firebase_key.json")
+                firebase_admin.initialize_app(cred, {
+                    'databaseURL': 'https://home-be9db-default-rtdb.asia-southeast1.firebasedatabase.app/'
+                })
+            except Exception as e:
+                st.error(f"การเชื่อมต่อ Firebase ล้มเหลว: {str(e)}")
+                st.stop()
+
         return db.reference('friend_houses')
-    
+
     except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase: {str(e)}")
+        st.error(f"เกิดข้อผิดพลาดร้ายแรง: {str(e)}")
         st.stop()
 
 # เริ่มต้น Firebase
@@ -110,11 +112,12 @@ with st.sidebar:
         name = st.text_input("ชื่อเพื่อน")
         x = st.number_input("ตำแหน่ง X", 0, 500, 250)
         y = st.number_input("ตำแหน่ง Y", 0, 500, 250)
-        
+
         if st.form_submit_button("เพิ่มตำแหน่ง"):
             if name.strip():
                 if add_friend(name.strip(), x, y):
                     st.success("เพิ่มข้อมูลสำเร็จ!")
+                    st.rerun()
             else:
                 st.warning("กรุณากรอกชื่อเพื่อน")
 
@@ -124,21 +127,21 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("แผนที่ตำแหน่ง")
     data = load_data()
-    
+
     if data:
         try:
             fig, ax = plt.subplots(figsize=(10, 8))
             ax.set_xlim(0, 500)
             ax.set_ylim(0, 500)
-            
+            ax.grid(True)
+
             # พล็อตจุดและชื่อ
             for key, info in data.items():
                 ax.scatter(info['x'], info['y'], color='blue')
-                ax.text(info['x'], info['y']+15, info['name'], 
-                       ha='center', fontsize=10, 
-                       bbox=dict(facecolor='white', alpha=0.7))
-            
-            ax.grid(True)
+                ax.text(info['x'], info['y'] + 15, info['name'],
+                        ha='center', fontsize=10,
+                        bbox=dict(facecolor='white', alpha=0.7))
+
             st.pyplot(fig)
         except Exception as e:
             st.error(f"สร้างแผนที่ไม่สำเร็จ: {str(e)}")

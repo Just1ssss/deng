@@ -12,39 +12,6 @@ rcParams['font.sans-serif'] = ['Tahoma', 'DejaVu Sans', 'Lucida Grande', 'Verdan
 
 # --- Firebase init ---
 
-# ตรวจสอบไฟล์คีย์
-if not os.path.exists("firebase_key.json"):
-    st.error("ไม่พบไฟล์ firebase_key.json กรุณาใส่ไฟล์ในโฟลเดอร์โปรเจค")
-    st.stop()
-
-# ฟังก์ชันเริ่มต้น Firebase
-def initialize_firebase():
-    try:
-        # ตรวจสอบว่า Firebase ยังไม่ถูกเริ่มต้น
-        if not firebase_admin._apps:
-            # ตรวจสอบว่าไฟล์คีย์ถูกต้อง
-            with open("firebase_key.json") as f:
-                json.load(f)  # ทดสอบว่าเป็น JSON ที่ถูกต้อง
-            
-            # เริ่มต้น Firebase
-            cred = credentials.Certificate("firebase_key.json")
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': 'https://home-be9db-default-rtdb.asia-southeast1.firebasedatabase.app/',
-                'projectId': 'home-be9db'  # ใส่ ID โปรเจคให้ชัดเจน
-            })
-        return db.reference('friend_houses')
-    
-    except json.JSONDecodeError:
-        st.error("ไฟล์คีย์ไม่ถูกต้อง กรุณาดาวน์โหลดไฟล์ใหม่จาก Firebase Console")
-    except ValueError as e:
-        st.error(f"การตั้งค่า Firebase ไม่ถูกต้อง: {str(e)}")
-    except Exception as e:
-        st.error(f"เริ่มต้น Firebase ไม่สำเร็จ: {str(e)}")
-    st.stop()
-
-# เริ่มต้น Firebase
-ref = initialize_firebase()
-
 try:
     if not firebase_admin._apps:
         cred = credentials.Certificate("firebase_key.json")

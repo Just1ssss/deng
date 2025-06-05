@@ -45,6 +45,16 @@ def initialize_firebase():
 # เริ่มต้น Firebase
 ref = initialize_firebase()
 
+try:
+    if not firebase_admin._apps:
+        cred = credentials.Certificate("firebase_key.json")
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': 'https://home-be9db-default-rtdb.asia-southeast1.firebasedatabase.app/'
+        })
+    ref = db.reference('friend_houses')
+except Exception as e:
+    st.error(f"การเชื่อมต่อ Firebase ล้มเหลว: {str(e)}")
+    st.stop()
 
 
 # --- Data functions ---
